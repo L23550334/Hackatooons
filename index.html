@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MathQuest: Chihuahua</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset y variables ─────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --purple: #3C3489;
+      --purple-light: #EEEDFE;
+      --purple-mid: #7F77DD;
+      --teal: #0F6E56;
+      --teal-light: #E1F5EE;
+      --coral: #993C1D;
+      --coral-light: #FAECE7;
+      --green: #3B6D11;
+      --green-light: #EAF3DE;
+      --red: #A32D2D;
+      --red-light: #FCEBEB;
+      --amber: #854F0B;
+      --amber-light: #FAEEDA;
+      --bg: #f7f6f3;
+      --card: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --text: #1a1a1a;
+      --text2: #555;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    /* ── Pantallas base ────────────────────────── */
+    .screen {
+      display: none;
+      flex-direction: column;
+      min-height: 500px;
+    }
+
+    /* ── HUD superior ──────────────────────────── */
+    .hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #f0eefd;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text2);
+      flex-shrink: 0;
+    }
+    .hud-title { font-weight: 700; color: var(--purple); font-size: 14px; }
+    .hp-group { display: flex; align-items: center; gap: 8px; }
+    .hp-track { width: 90px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .hp-fill  { height: 100%; background: var(--green); border-radius: 4px; transition: width .3s, background .3s; }
+
+    /* ── INTRO ─────────────────────────────────── */
+    #screen-intro {
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(160deg, #EEEDFE 0%, #E1F5EE 100%);
+    }
+    .game-logo { font-family: 'Press Start 2P', monospace; font-size: 15px; color: var(--purple); line-height: 1.6; margin-bottom: 6px; }
+    .game-sub  { font-size: 13px; color: var(--text2); margin-bottom: 1.8rem; }
+    .intro-card {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      text-align: left;
+      max-width: 400px;
+      width: 100%;
+      margin-bottom: 1.8rem;
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text2);
+    }
+    .intro-card strong { display: block; color: var(--text); font-weight: 700; margin-bottom: 6px; }
+    .btn-start {
+      background: var(--purple);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 14px 40px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .btn-start:hover  { background: #534AB7; }
+    .btn-start:active { transform: scale(0.97); }
+
+    /* ── MAPA ───────────────────────────────────── */
+    #screen-map { flex-direction: column; }
+    #mapCanvas { width: 100%; height: auto; display: block; cursor: pointer; }
+    .map-hint { text-align: center; padding: 8px; font-size: 12px; color: var(--text2); background: #fafafa; border-top: 1px solid var(--border); }
+
+    /* ── BATALLA ────────────────────────────────── */
+    #screen-battle { flex-direction: column; }
+    .battle-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; color: var(--text2);
+      flex-shrink: 0;
+    }
+    .battle-header button {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 5px 12px; font-size: 12px; cursor: pointer; color: var(--text2);
+      font-family: 'Nunito', sans-serif;
+    }
+    #boss-badge {
+      background: var(--coral-light); color: var(--coral);
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 6px; display: none;
+    }
+    .battle-stage {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      padding: 14px; background: #EEEDFE22;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .fighter-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px; text-align: center;
+    }
+    .fighter-card .f-label { font-size: 11px; color: var(--text2); margin-bottom: 2px; }
+    .fighter-card .f-name  { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .fighter-card .f-sprite { font-size: 38px; margin: 6px 0 10px; }
+    .f-hp-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
+    .f-hp-row .hp-track { flex: 1; }
+
+    .battle-log {
+      padding: 10px 16px; font-size: 13px; color: var(--text2);
+      background: #fafafa; border-bottom: 1px solid var(--border);
+      min-height: 38px; font-style: italic; flex-shrink: 0;
+    }
+    .battle-question { padding: 14px 16px; flex: 1; }
+    #question-text { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    #hint-text {
+      font-size: 12px; color: var(--amber); background: var(--amber-light);
+      padding: 6px 10px; border-radius: 8px; margin-bottom: 10px; display: none;
+    }
+    .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .answer-btn {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 8px;
+      font-size: 15px; font-weight: 600; font-family: 'Nunito', sans-serif;
+      cursor: pointer; color: var(--text); transition: background .15s;
+    }
+    .answer-btn:hover:not(:disabled) { background: var(--purple-light); }
+    .answer-btn.correct { background: var(--green-light); border-color: var(--green); color: var(--green); }
+    .answer-btn.wrong   { background: var(--red-light);   border-color: var(--red);   color: var(--red);   }
+    .answer-btn:disabled { cursor: not-allowed; opacity: .85; }
+
+    .battle-actions { display: flex; gap: 8px; padding: 0 16px 14px; flex-shrink: 0; }
+    .btn-hint {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--text2);
+      font-family: 'Nunito', sans-serif;
+    }
+    .btn-hint:hover { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
+
+    /* ── PANTALLA FINAL ──────────────────────────── */
+    #screen-end {
+      align-items: center; justify-content: center;
+      padding: 2.5rem 1.5rem; text-align: center;
+      background: linear-gradient(160deg, #E1F5EE 0%, #EEEDFE 100%);
+    }
+    .end-trophy { font-size: 64px; margin-bottom: 12px; }
+    .end-title  { font-family: 'Press Start 2P', monospace; font-size: 13px; color: var(--purple); margin-bottom: 8px; }
+    .end-stars  { font-size: 32px; margin-bottom: 8px; }
+    .end-score  { font-size: 22px; font-weight: 700; color: var(--teal); margin-bottom: 20px; }
+    .btn-replay {
+      background: var(--teal); color: white; border: none;
+      border-radius: var(--radius); padding: 12px 32px;
+      font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif;
+      cursor: pointer; transition: background .2s;
+    }
+    .btn-replay:hover { background: #0F6E56; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── INTRO ──────────────────────────────────────── -->
+  <div id="screen-intro" class="screen">
+    <p class="game-logo">MathQuest<br>Chihuahua</p>
+    <p class="game-sub">RPG educativo — Matemáticas y STEM</p>
+    <div class="intro-card">
+      <strong>¿Cómo se juega?</strong>
+      Explora el mapa de Chihuahua ciudad<br>
+      Encuentra enemigos matemáticos en cada zona<br>
+      Responde preguntas STEM para atacar<br>
+      Derrota al jefe final en la UACH 🎓
+    </div>
+    <button class="btn-start" onclick="startGame()">▶ Iniciar aventura</button>
+  </div>
+
+  <!-- ── MAPA ───────────────────────────────────────── -->
+  <div id="screen-map" class="screen">
+    <div class="hud">
+      <span class="hud-title">🗺️ Chihuahua Capital</span>
+      <div class="hp-group">
+        <span>HP</span>
+        <div class="hp-track"><div class="hp-fill" id="hp-bar" style="width:100%"></div></div>
+        <span id="hp-text">20/20</span>
+      </div>
+      <span id="score-map">⭐ 0</span>
+    </div>
+    <canvas id="mapCanvas" width="680" height="380"></canvas>
+    <p class="map-hint">Toca una zona activa para entrar en batalla</p>
+  </div>
+
+  <!-- ── BATALLA ────────────────────────────────────── -->
+  <div id="screen-battle" class="screen">
+    <div class="battle-header">
+      <button onclick="show('map'); refreshMap()">← Mapa</button>
+      <span id="zone-label">Plaza de Armas</span>
+      <span id="boss-badge">⚠️ BOSS</span>
+      <span id="score-battle">⭐ 0</span>
+    </div>
+
+    <div class="battle-stage">
+      <div class="fighter-card">
+        <p class="f-label">Enemigo</p>
+        <p class="f-name" id="enemy-name">Álgebra Loca</p>
+        <div class="f-sprite">👾</div>
+        <div class="f-hp-row">
+          <span id="enemy-hp-text">3/3</span>
+          <div class="hp-track">
+            <div class="hp-fill" id="enemy-hp-bar" style="width:100%;background:#E24B4A"></div>
+          </div>
+        </div>
+      </div>
+      <div class="fighter-card">
+        <p class="f-label">Tú</p>
+        <p class="f-name">Explorador</p>
+        <div class="f-sprite">🧑‍🎓</div>
+        <div class="f-hp-row">
+          <span id="player-hp-battle-text">20/20</span>
+          <div class="hp-track">
+            <div class="hp-fill" id="player-hp-battle-bar" style="width:100%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="battle-log" id="battle-log">¡Un enemigo matemático apareció!</div>
+
+    <div class="battle-question">
+      <p id="question-text">Cargando pregunta...</p>
+      <p id="hint-text"></p>
+      <div class="answer-grid" id="answer-grid"></div>
+    </div>
+
+    <div class="battle-actions">
+      <button class="btn-hint" id="btn-hint">💡 Ver pista</button>
+    </div>
+  </div>
+
+  <!-- ── FIN DEL JUEGO ──────────────────────────────── -->
+  <div id="screen-end" class="screen">
+    <div class="end-trophy">🏆</div>
+    <p class="end-title">¡Chihuahua<br>liberada!</p>
+    <div class="end-stars" id="final-stars">⭐⭐⭐</div>
+    <p class="end-score" id="final-score">0 pts</p>
+    <button class="btn-replay" onclick="location.reload()">Jugar de nuevo</button>
+  </div>
+
+</div>
+
+<!-- El orden importa: primero los datos, luego el mapa, luego el motor -->
+<script src="questions.js"></script>
+<script src="map.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
